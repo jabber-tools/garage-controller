@@ -9,7 +9,7 @@
 
 Microcontroller software for Raspberry Pi. Based on commands received from MQTT opens/closes garage door utilizing wireless garage door controller connected to GPIO.
 
-## Cross-compilaiton on ARMv6 and ARMv7 architectures
+## Cross-compilation on ARMv6 and ARMv7 architectures
 See [https://github.com/japaric/rust-cross](https://github.com/japaric/rust-cross)
 ```
 sudo apt-get update
@@ -39,7 +39,7 @@ cargo build --target=arm-unknown-linux-gnueabihf
 ```
 Nice details on compilation for Raspberry Pi Zero (ARMv6) can be found [here](https://disconnected.systems/blog/rust-powered-rover/#setting-up-rust-for-cross-compiling).
 
-#Compiling RPPAL library
+## Compiling RPPAL library
 In order to compile following dependency [RPPAL](https://github.com/golemparts/rppal) CC compiler must be installed otherwise following error will be thrown:
 error: linker `cc` not found
 could not compile `libc`.
