@@ -12,7 +12,9 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1c14acbe-bd47-4b8d-97f4-d5eda15246a6" name="Default Changelist" comment="" />
+    <list default="true" id="1c14acbe-bd47-4b8d-97f4-d5eda15246a6" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -92,7 +94,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1598810605562</updated>
-      <workItem from="1598810607690" duration="771000" />
+      <workItem from="1598810607690" duration="1268000" />
     </task>
     <servers />
   </component>
@@ -116,9 +118,9 @@
       <screen x="0" y="0" width="1920" height="1160" />
     </state>
     <state width="1877" height="477" key="GridCell.Tab.0.right/0.0.1920.1160/1920.0.1920.1040@0.0.1920.1160" timestamp="1598811295330" />
-    <state x="616" y="270" width="672" height="677" key="run.anything.popup" timestamp="1598811270526">
+    <state x="616" y="270" width="672" height="677" key="run.anything.popup" timestamp="1598811384832">
       <screen x="0" y="0" width="1920" height="1160" />
     </state>
-    <state x="616" y="270" width="672" height="677" key="run.anything.popup/0.0.1920.1160/1920.0.1920.1040@0.0.1920.1160" timestamp="1598811270526" />
+    <state x="616" y="270" width="672" height="677" key="run.anything.popup/0.0.1920.1160/1920.0.1920.1040@0.0.1920.1160" timestamp="1598811384832" />
   </component>
 </project>
