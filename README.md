@@ -9,4 +9,48 @@
 
 Microcontroller software for Raspberry Pi. Based on commands received from MQTT opens/closes garage door utilizing wireless garage door controller connected to GPIO.
 
-TBD...
+## Cross-compilaiton on ARMv6 and ARMv7 architectures
+See [https://github.com/japaric/rust-cross](https://github.com/japaric/rust-cross)
+```
+sudo apt-get update
+# Install the C cross toolchain
+sudo apt-get install -qq gcc-arm-linux-gnueabihf
+
+#Install the cross compiled standard crates
+rustup target add armv7-unknown-linux-gnueabihf  #for ARMv7 
+rustup target add arm-unknown-linux-gnueabihf #for ARMv6 (Pi Zero)
+
+mkdir -p ~/.cargo
+touch ~/.cargo/config
+# it seems cargo does not support multiple build targets in config file -> always enable only v6 or v7 section
+#put following content into file for ARMv7:
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+
+#put following content into file for ARMv6
+[target.arm-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+
+#ARMv7 build
+cargo build --target=armv7-unknown-linux-gnueabihf
+
+#ARMv6 build
+cargo build --target=arm-unknown-linux-gnueabihf
+```
+Nice details on compilation for Raspberry Pi Zero (ARMv6) can be found [here](https://disconnected.systems/blog/rust-powered-rover/#setting-up-rust-for-cross-compiling).
+
+#Compiling RPPAL library
+In order to compile following dependency [RPPAL](https://github.com/golemparts/rppal) CC compiler must be installed otherwise following error will be thrown:
+error: linker `cc` not found
+could not compile `libc`.
+
+Detials [here](https://ostechnix.com/how-to-fix-rust-error-linker-cc-not-found-on-linux/)
+
+Solution is to run following command:
+```
+sudo apt install build-essential
+```
+Then compilation for ARMv7 succeeds. 
+
+TBD: ARMv6 is failing with error: linking with `cc` failed: exit code: 1
+
