@@ -52,5 +52,10 @@ sudo apt install build-essential
 ```
 Then compilation for ARMv7 succeeds. 
 
-TBD: ARMv6 is failing with error: linking with `cc` failed: exit code: 1
+ARMv6 still failing with error: linking with `cc` failed: exit code: 1
 
+Solution seems to be described [here](https://www.growse.com/2020/04/26/adventures-in-rust-and-cross-compilation-for-the-raspberry-pi.html):
+```
+rustup target add arm-unknown-linux-musleabihf
+CARGO_TARGET_ARM_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gnueabihf-ld REALGCC=arm-linux-gnueabihf-gcc-8 TARGET_CC=musl-gcc cargo build --target=arm-unknown-linux-musleabihf
+```
