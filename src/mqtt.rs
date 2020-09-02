@@ -5,10 +5,10 @@ use mqtt_async_client::{
 
 use tokio::{
     self,
-    time::{timeout, Duration},
+    time::Duration,
 };
 
-fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Result<Client> {
+pub fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Result<Client> {
     Client::builder()
         .set_host(host.to_owned())
         .set_port(port)
