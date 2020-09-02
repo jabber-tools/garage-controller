@@ -1,4 +1,4 @@
-use crate::errors::{Result};
+use crate::errors::Result;
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
@@ -51,7 +51,6 @@ impl JWTService {
     }
 
     pub fn sign(&self, payload: SmartHomeCommandPayload) -> Result<String> {
-
         let (iat_val, exp_val) = JWTService::get_token_iat_and_exp();
 
         let claims = Claims {
@@ -177,14 +176,15 @@ MwIDAQAB
     // cargo test -- --show-output test_sign_and_verify
     #[test]
     fn test_sign_and_verify() -> Result<()> {
-
-        let jwt_svc = JWTService::new(SAMPLE_PUBLIC_KEY2.to_owned(), Some(SAMPLE_PRIVATE_KEY2.to_owned()));
-        let token = jwt_svc.sign(SmartHomeCommandPayload{
+        let jwt_svc = JWTService::new(
+            SAMPLE_PUBLIC_KEY2.to_owned(),
+            Some(SAMPLE_PRIVATE_KEY2.to_owned()),
+        );
+        let token = jwt_svc.sign(SmartHomeCommandPayload {
             command: "toggle".to_owned(),
             id: "123".to_owned(),
         })?;
         println!("token {}", token);
-
 
         let jwt_svc_verif = JWTService::new(SAMPLE_PUBLIC_KEY2.to_owned(), None);
         let claims = jwt_svc_verif.verify(&token)?;
@@ -195,9 +195,11 @@ MwIDAQAB
     // cargo test -- --show-output test_sign_corrupt_fail_to_verify
     #[test]
     fn test_sign_corrupt_fail_to_verify() -> Result<()> {
-
-        let jwt_svc = JWTService::new(SAMPLE_PUBLIC_KEY2.to_owned(), Some(SAMPLE_PRIVATE_KEY2.to_owned()));
-        let token = jwt_svc.sign(SmartHomeCommandPayload{
+        let jwt_svc = JWTService::new(
+            SAMPLE_PUBLIC_KEY2.to_owned(),
+            Some(SAMPLE_PRIVATE_KEY2.to_owned()),
+        );
+        let token = jwt_svc.sign(SmartHomeCommandPayload {
             command: "toggle".to_owned(),
             id: "123".to_owned(),
         })?;
@@ -212,7 +214,10 @@ MwIDAQAB
 
         match claims {
             Ok(claims) => panic!("test_sign_corrupt_fail_to_verify expected error"),
-            Err(error) => assert_eq!(error.message.contains("Base64 error: Invalid last symbol"), true),
+            Err(error) => assert_eq!(
+                error.message.contains("Base64 error: Invalid last symbol"),
+                true
+            ),
         }
 
         Ok(())

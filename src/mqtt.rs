@@ -3,10 +3,7 @@ use mqtt_async_client::{
     Error, Result,
 };
 
-use tokio::{
-    self,
-    time::Duration,
-};
+use tokio::{self, time::Duration};
 
 pub fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Result<Client> {
     Client::builder()

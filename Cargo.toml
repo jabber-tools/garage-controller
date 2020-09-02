@@ -11,6 +11,7 @@ mqtt-async-client = "0.1.5"
 tokio = "0.2.22"
 jsonwebtoken = "7"
 serde = {version = "1.0", features = ["derive"] }
+aes = "0.5.0"
 
 [target.'cfg(unix)'.dependencies]
 rppal = "0.11.3"
