@@ -1,6 +1,7 @@
 use crypto::symmetriccipher;
 use hex;
 use std::result;
+use toml;
 
 #[derive(Debug)]
 pub struct Error {
@@ -49,6 +50,22 @@ impl From<std::str::Utf8Error> for Error {
 
 impl From<hex::FromHexError> for Error {
     fn from(error: hex::FromHexError) -> Error {
+        Error {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<toml::de::Error> for Error {
+    fn from(error: toml::de::Error) -> Error {
+        Error {
+            message: format!("{}", error),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(error: std::io::Error) -> Error {
         Error {
             message: format!("{}", error),
         }

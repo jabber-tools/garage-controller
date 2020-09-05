@@ -212,12 +212,14 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "jsonwebtoken",
+ "lazy_static",
  "mqtt-async-client",
  "rand 0.7.3",
  "rppal",
  "rust-crypto",
  "serde",
  "tokio",
+ "toml",
 ]
 
 [[package]]
@@ -910,6 +912,15 @@ dependencies = [
  "rustls",
  "tokio",
  "webpki",
+]
+
+[[package]]
+name = "toml"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "758664fc71a3a69038656bee8b6be6477d2a6c315a6b81f7081f591bffa4111f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

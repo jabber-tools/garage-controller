@@ -18,11 +18,39 @@ pub fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    // for integration tests only. DO NOT COMMIT real values!
-    const HOST: &str = "m24.cloudmqtt.com";
-    const PORT: u16 = 11123;
-    const USERNAME: &str = "some user";
-    const PASSWORD: &str = "some password";
+    use lazy_static::lazy_static;
+    use serde::Deserialize;
+    use toml;
+    use std::fmt::Debug;
+    use std::default::Default;
+
+    #[derive(Debug, Deserialize, Default)]
+    struct TomlFile {
+        pub mqtt: MQTT,
+    }
+
+    #[derive(Debug, Deserialize, Default)]
+    pub struct MQTT {
+        host: String,
+        port: u16,
+        username: String,
+        password: String,
+    }
+
+    impl MQTT {
+        fn new() -> crate::errors::Result<Self> {
+            let toml_str = std::fs::read_to_string("./examples/testdata/mqtt.toml")?;
+            let toml = toml::from_str::<TomlFile>(&toml_str)?;
+            Ok(toml.mqtt)
+        }
+    }
+
+    lazy_static! {
+        pub static ref MQTT_CONN: MQTT = {
+            let mqtt = MQTT::new().unwrap_or_default();
+            mqtt
+        };
+    }
 
     // cargo test -- --show-output test_plain_client
     #[test]
@@ -31,7 +59,12 @@ mod tests {
         let mut rt = tokio::runtime::Runtime::new()?;
 
         let result = rt.block_on(async {
-            let mut c = plain_client(HOST, PORT, USERNAME, PASSWORD)?;
+            let mut c = plain_client(
+                &MQTT_CONN.host,
+                MQTT_CONN.port,
+                &MQTT_CONN.username,
+                &MQTT_CONN.password,
+            )?;
             c.connect().await?;
             println!("connected");
             c.disconnect().await?;
@@ -41,13 +74,18 @@ mod tests {
         result
     }
 
-    // // cargo test -- --show-output pub_and_sub_plain
+    // cargo test -- --show-output pub_and_sub_plain
     #[test]
     #[ignore]
     fn pub_and_sub_plain() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
-            let mut c = plain_client(HOST, PORT, USERNAME, PASSWORD)?;
+            let mut c = plain_client(
+                &MQTT_CONN.host,
+                MQTT_CONN.port,
+                &MQTT_CONN.username,
+                &MQTT_CONN.password,
+            )?;
             c.connect().await?;
 
             // Subscribe
@@ -79,20 +117,25 @@ mod tests {
     fn sub_only_plain() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
-            let mut c = plain_client(HOST, PORT, USERNAME, PASSWORD)?;
+            let mut c = plain_client(
+                &MQTT_CONN.host,
+                MQTT_CONN.port,
+                &MQTT_CONN.username,
+                &MQTT_CONN.password,
+            )?;
             c.connect().await?;
 
             // Subscribe
             let subopts = Subscribe::new(vec![SubscribeTopic {
                 qos: QoS::AtMostOnce,
-                topic_path: "test/pub_and_sub".to_owned(),
+                topic_path: "garage/toggle".to_owned(),
             }]);
             let subres = c.subscribe(subopts).await?;
             subres.any_failures()?;
 
             // Read
             let r = c.read_subscriptions().await?;
-            assert_eq!(r.topic(), "test/pub_and_sub");
+            assert_eq!(r.topic(), "garage/toggle");
             println!("payload is {:#?}", String::from_utf8(r.payload().to_vec()));
 
             c.disconnect().await?;
