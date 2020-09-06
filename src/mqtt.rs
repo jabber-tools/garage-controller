@@ -125,7 +125,7 @@ mod tests {
 
     // cargo test -- --show-output test_sub_real_smart_home_msg
     #[test]
-    //#[ignore]
+    #[ignore]
     fn test_sub_real_smart_home_msg() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
