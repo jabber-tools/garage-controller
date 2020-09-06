@@ -3,12 +3,10 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
-#[derive(Debug, Serialize, Deserialize)]
+/// helper structrue so that we do not have to pass into signing
+/// function whole claims, probably can be rewritten using default values
 pub struct SmartHomeCommandPayload {
-    /// 'lock' | 'unlock' | 'toggle' | 'status'
     pub command: String,
-
-    /// request ID, should be returned in asynchronous response so that we can match the response to request
     pub id: String,
 }
 
@@ -19,7 +17,12 @@ pub struct Claims {
     aud: String,
     exp: u64,
     iat: u64,
-    command: SmartHomeCommandPayload,
+
+    /// 'lock' | 'unlock' | 'toggle' | 'status'
+    command: String,
+
+    /// request ID, should be returned in asynchronous response so that we can match the response to request
+    id: String,
 }
 
 /// JWTService can be used for:
@@ -59,7 +62,8 @@ impl JWTService {
             aud: String::from("myhome-cc-smarthome-microcontroller"),
             exp: exp_val,
             iat: iat_val,
-            command: payload,
+            command: payload.command,
+            id: payload.id,
         };
 
         let token = encode(
@@ -72,7 +76,7 @@ impl JWTService {
         Ok(token)
     }
 
-    pub fn verify(&self, token: &str) -> Result<Claims> {
+    pub fn verify(&self, token: &str, validate_expiry: bool) -> Result<Claims> {
         let mut aud = std::collections::HashSet::new();
         aud.insert("myhome-cc-smarthome-microcontroller".to_owned());
 
@@ -80,7 +84,7 @@ impl JWTService {
             iss: Some("myhome-cc-smarthome-aog".to_owned()),
             sub: Some("myhome-cc-smarthome-microcontroller-myhome".to_owned()),
             aud: Some(aud),
-            validate_exp: true,
+            validate_exp: validate_expiry,
             leeway: 0,
             validate_nbf: false,
             algorithms: vec![Algorithm::RS256],
@@ -98,9 +102,25 @@ impl JWTService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lazy_static::lazy_static;
+    use std::fs;
 
+    lazy_static! {
+        pub static ref SMART_HOME_ACTION_PRIVATE_KEY: String =
+            fs::read_to_string("./examples/testdata/smart-home-priv.pem").unwrap_or("".to_owned());
+        pub static ref SMART_HOME_ACTION_PUBLIC_KEY: String =
+            fs::read_to_string("./examples/testdata/smart-home-pub.pem").unwrap_or("".to_owned());
+        pub static ref SMART_HOME_ACTION_REAL_TOKEN: String =
+            fs::read_to_string("./examples/testdata/smart_home_token.txt").unwrap_or("".to_owned());
+    }
+
+    // https://travistidwell.com/jsencrypt/demo/
+    // SAMPLE_PRIVATE_KEY and SAMPLE_PUBLIC_KEY are 1024 bit long
+    // jsonwebtoken (and underlying crypto libraries) require
+    // RSA_PKCS1_2048_8192_SHA256 for RS256 algorithm, shorter keys
+    // will be always invalid!
     #[allow(dead_code)]
-    const SAMPLE_PRIVATE_KEY: &str = r#"
+    const SAMPLE_PRIVATE_KEY_1024: &str = r#"
 -----BEGIN RSA PRIVATE KEY-----
 MIICWwIBAAKBgQCC8fI2z6Aeppz9GMAO5iIJsuMF/+gYMLh8AaYT/4RI06ggEybB
 fptsGryUIr1nDZ0BAefiudUC7QGc979ZtIOVOvNsd0+OO+0upjvbggic2r04NeNz
@@ -119,7 +139,7 @@ ni/ZjR55vIi9Ynn3m3eETkMpJe0dm71Ou3aOrwtoEQ==
         "#;
 
     #[allow(dead_code)]
-    const SAMPLE_PUBLIC_KEY: &str = r#"
+    const SAMPLE_PUBLIC_KEY_1024: &str = r#"
 -----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCC8fI2z6Aeppz9GMAO5iIJsuMF
 /+gYMLh8AaYT/4RI06ggEybBfptsGryUIr1nDZ0BAefiudUC7QGc979ZtIOVOvNs
@@ -131,7 +151,7 @@ yHo9ZifUH6e/0aSAtQIDAQAB
     // sample keys taken from jwt.io. Seems longer than keys above
     // and it passes through signing process
     // private key above throws: Error { message: "InvalidRsaKey" }
-    const SAMPLE_PRIVATE_KEY2: &str = r#"
+    const SAMPLE_PRIVATE_KEY_2048: &str = r#"
 -----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAnzyis1ZjfNB0bBgKFMSvvkTtwlvBsaJq7S5wA+kzeVOVpVWw
 kWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHcaT92whREFpLv9cj5lTeJSibyr/Mr
@@ -161,7 +181,7 @@ jg/3747WSsf/zBTcHihTRBdAv6OmdhV4/dD5YBfLAkLrd+mX7iE=
 -----END RSA PRIVATE KEY-----
         "#;
 
-    const SAMPLE_PUBLIC_KEY2: &str = r#"
+    const SAMPLE_PUBLIC_KEY_2048: &str = r#"
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv
 vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc
@@ -177,8 +197,8 @@ MwIDAQAB
     #[test]
     fn test_sign_and_verify() -> Result<()> {
         let jwt_svc = JWTService::new(
-            SAMPLE_PUBLIC_KEY2.to_owned(),
-            Some(SAMPLE_PRIVATE_KEY2.to_owned()),
+            SAMPLE_PUBLIC_KEY_2048.to_owned(),
+            Some(SAMPLE_PRIVATE_KEY_2048.to_owned()),
         );
         let token = jwt_svc.sign(SmartHomeCommandPayload {
             command: "toggle".to_owned(),
@@ -186,8 +206,8 @@ MwIDAQAB
         })?;
         println!("token {}", token);
 
-        let jwt_svc_verif = JWTService::new(SAMPLE_PUBLIC_KEY2.to_owned(), None);
-        let claims = jwt_svc_verif.verify(&token)?;
+        let jwt_svc_verif = JWTService::new(SAMPLE_PUBLIC_KEY_2048.to_owned(), None);
+        let claims = jwt_svc_verif.verify(&token, true)?;
         println!("claims {:#?}", claims);
         Ok(())
     }
@@ -196,8 +216,8 @@ MwIDAQAB
     #[test]
     fn test_sign_corrupt_fail_to_verify() -> Result<()> {
         let jwt_svc = JWTService::new(
-            SAMPLE_PUBLIC_KEY2.to_owned(),
-            Some(SAMPLE_PRIVATE_KEY2.to_owned()),
+            SAMPLE_PUBLIC_KEY_2048.to_owned(),
+            Some(SAMPLE_PRIVATE_KEY_2048.to_owned()),
         );
         let token = jwt_svc.sign(SmartHomeCommandPayload {
             command: "toggle".to_owned(),
@@ -205,12 +225,12 @@ MwIDAQAB
         })?;
         println!("token {}", token);
 
-        // replace last character of token with z effectivelly corrupting it
+        // replace last character of token with z effectively corrupting it
         let token = format!("{}z", &token[..token.len() - 1]);
         println!("token {}", token);
 
-        let jwt_svc_verif = JWTService::new(SAMPLE_PUBLIC_KEY2.to_owned(), None);
-        let claims = jwt_svc_verif.verify(&token);
+        let jwt_svc_verif = JWTService::new(SAMPLE_PUBLIC_KEY_2048.to_owned(), None);
+        let claims = jwt_svc_verif.verify(&token, true);
 
         match claims {
             Ok(claims) => panic!("test_sign_corrupt_fail_to_verify expected error"),
@@ -220,6 +240,16 @@ MwIDAQAB
             ),
         }
 
+        Ok(())
+    }
+
+    // cargo test -- --show-output test_verify_with_real_cert
+    #[test]
+    #[ignore]
+    fn test_verify_with_real_cert() -> Result<()> {
+        let jwt_svc_verif = JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
+        let claims = jwt_svc_verif.verify(&SMART_HOME_ACTION_REAL_TOKEN, false)?;
+        println!("claims {:#?}", claims);
         Ok(())
     }
 }

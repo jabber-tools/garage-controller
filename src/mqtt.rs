@@ -1,11 +1,16 @@
-use mqtt_async_client::{
-    client::{Client, Publish, QoS, Subscribe, SubscribeTopic, Unsubscribe, UnsubscribeTopic},
-    Error, Result,
+use crate::errors::Result;
+use mqtt_async_client::client::{
+    Client, Publish, QoS, Subscribe, SubscribeTopic, Unsubscribe, UnsubscribeTopic,
 };
 
 use tokio::{self, time::Duration};
 
-pub fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Result<Client> {
+pub fn plain_client(
+    host: &str,
+    port: u16,
+    username: &str,
+    password: &str,
+) -> mqtt_async_client::Result<Client> {
     Client::builder()
         .set_host(host.to_owned())
         .set_port(port)
@@ -18,11 +23,25 @@ pub fn plain_client(host: &str, port: u16, username: &str, password: &str) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::aes::decrypt;
+    use crate::jwt::JWTService;
     use lazy_static::lazy_static;
     use serde::Deserialize;
-    use toml;
-    use std::fmt::Debug;
     use std::default::Default;
+    use std::fmt::Debug;
+    use std::fs;
+    use toml;
+
+    lazy_static! {
+        pub static ref SMART_HOME_ACTION_PUBLIC_KEY: String =
+            fs::read_to_string("./examples/testdata/smart-home-pub.pem").unwrap_or("".to_owned());
+        pub static ref AES_KEY: String =
+            fs::read_to_string("./examples/testdata/aes.txt").unwrap_or("".to_owned());
+        pub static ref MQTT_CONN: MQTT = {
+            let mqtt = MQTT::new().unwrap_or_default();
+            mqtt
+        };
+    }
 
     #[derive(Debug, Deserialize, Default)]
     struct TomlFile {
@@ -43,13 +62,6 @@ mod tests {
             let toml = toml::from_str::<TomlFile>(&toml_str)?;
             Ok(toml.mqtt)
         }
-    }
-
-    lazy_static! {
-        pub static ref MQTT_CONN: MQTT = {
-            let mqtt = MQTT::new().unwrap_or_default();
-            mqtt
-        };
     }
 
     // cargo test -- --show-output test_plain_client
@@ -74,10 +86,10 @@ mod tests {
         result
     }
 
-    // cargo test -- --show-output pub_and_sub_plain
+    // cargo test -- --show-output test_pub_and_sub
     #[test]
     #[ignore]
-    fn pub_and_sub_plain() -> Result<()> {
+    fn test_pub_and_sub() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
             let mut c = plain_client(
@@ -111,10 +123,10 @@ mod tests {
         })
     }
 
-    // cargo test -- --show-output sub_only_plain
+    // cargo test -- --show-output test_sub_real_smart_home_msg
     #[test]
-    #[ignore]
-    fn sub_only_plain() -> Result<()> {
+    //#[ignore]
+    fn test_sub_real_smart_home_msg() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
             let mut c = plain_client(
@@ -136,10 +148,18 @@ mod tests {
             // Read
             let r = c.read_subscriptions().await?;
             assert_eq!(r.topic(), "garage/toggle");
-            println!("payload is {:#?}", String::from_utf8(r.payload().to_vec()));
+
+            let payload = String::from_utf8(r.payload().to_vec())?;
+            println!("original payload from mqtt {}", payload);
+
+            let decrypted_payload = decrypt(&payload, &AES_KEY)?;
+            println!("decrypted payload from mqtt {}", decrypted_payload);
+
+            let jwt_svc_verif = JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
+            let claims = jwt_svc_verif.verify(&decrypted_payload, false)?;
+            println!("token verified. claims {:#?}", claims);
 
             c.disconnect().await?;
-            println!("sub_only_plain OK!");
             Ok(())
         })
     }
