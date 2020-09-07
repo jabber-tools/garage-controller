@@ -24,7 +24,7 @@ pub fn plain_client(
 mod tests {
     use super::*;
     use crate::aes::decrypt;
-    use crate::jwt::{JWTService, SmartHomeCommandPayload};
+    use crate::jwt::{Claims, JWTService};
     use lazy_static::lazy_static;
     use serde::Deserialize;
     use std::default::Default;
@@ -131,7 +131,7 @@ mod tests {
 
     // cargo test -- --show-output test_sub_real_smart_home_msg
     #[test]
-    #[ignore]
+    //#[ignore]
     fn test_sub_real_smart_home_msg() -> Result<()> {
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
@@ -165,16 +165,26 @@ mod tests {
             let claims = jwt_svc_verif.verify(&decrypted_payload, true)?;
             println!("token verified. claims {:#?}", claims);
 
-            let confirmation_payload = SmartHomeCommandPayload {
+            let confirmation_payload = Claims {
                 command: "confirmation".to_owned(),
                 id: claims.id,
+                ..Claims::default()
             };
             let jwt_svc_signing = JWTService::new(
                 MICROCONTROLLER_PUBLIC_KEY.to_owned(),
                 Some(MICROCONTROLLER_PRIVATE_KEY.to_owned()),
             );
             let confirmation_token = jwt_svc_signing.sign(confirmation_payload)?;
-            println!("acknowledgment sent {}", confirmation_token);
+            println!("acknowledgment prepared {}", confirmation_token);
+
+            // Publish
+            let mut p = Publish::new(
+                "garage/toggleConfirm".to_owned(),
+                confirmation_token.as_bytes().to_vec(),
+            );
+            p.set_qos(QoS::AtMostOnce);
+            c.publish(&p).await?;
+            println!("acknowledgment sent!");
 
             c.disconnect().await?;
             Ok(())

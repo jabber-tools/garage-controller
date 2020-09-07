@@ -3,26 +3,40 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 
-/// helper structrue so that we do not have to pass into signing
-/// function whole claims, probably can be rewritten using default values
-pub struct SmartHomeCommandPayload {
-    pub command: String,
-    pub id: String,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    iss: String,
-    sub: String,
-    aud: String,
-    exp: u64,
-    iat: u64,
+    pub iss: String,
+    pub sub: String,
+    pub aud: String,
+    pub exp: u64,
+    pub iat: u64,
 
     /// 'lock' | 'unlock' | 'toggle' | 'status'
-    command: String,
+    pub command: String,
 
     /// request ID, should be returned in asynchronous response so that we can match the response to request
     pub id: String,
+}
+
+impl Default for Claims {
+    fn default() -> Self {
+        let iat_val = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        let exp_val = iat_val + 60;
+
+        Claims {
+            iss: String::from("myhome-cc-smarthome-aog"),
+            sub: String::from("myhome-cc-smarthome-microcontroller-myhome"),
+            aud: String::from("myhome-cc-smarthome-microcontroller"),
+            exp: exp_val,
+            iat: iat_val,
+            command: "".to_owned(),
+            id: "".to_owned(),
+        }
+    }
 }
 
 /// JWTService can be used for:
@@ -43,32 +57,10 @@ impl JWTService {
         }
     }
 
-    pub fn get_token_iat_and_exp() -> (u64, u64) {
-        let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        let validity = now + 60;
-        (now, validity)
-    }
-
-    pub fn sign(&self, payload: SmartHomeCommandPayload) -> Result<String> {
-        let (iat_val, exp_val) = JWTService::get_token_iat_and_exp();
-
-        let claims = Claims {
-            iss: String::from("myhome-cc-smarthome-aog"),
-            sub: String::from("myhome-cc-smarthome-microcontroller-myhome"),
-            aud: String::from("myhome-cc-smarthome-microcontroller"),
-            exp: exp_val,
-            iat: iat_val,
-            command: payload.command,
-            id: payload.id,
-        };
-
+    pub fn sign(&self, payload: Claims) -> Result<String> {
         let token = encode(
             &Header::new(Algorithm::RS256),
-            &claims,
+            &payload,
             &EncodingKey::from_rsa_pem(
                 &self.private_key.as_ref().unwrap().to_owned().into_bytes(),
             )?,
@@ -200,9 +192,10 @@ MwIDAQAB
             SAMPLE_PUBLIC_KEY_2048.to_owned(),
             Some(SAMPLE_PRIVATE_KEY_2048.to_owned()),
         );
-        let token = jwt_svc.sign(SmartHomeCommandPayload {
+        let token = jwt_svc.sign(Claims {
             command: "toggle".to_owned(),
             id: "123".to_owned(),
+            ..Claims::default()
         })?;
         println!("token {}", token);
 
@@ -219,9 +212,10 @@ MwIDAQAB
             SAMPLE_PUBLIC_KEY_2048.to_owned(),
             Some(SAMPLE_PRIVATE_KEY_2048.to_owned()),
         );
-        let token = jwt_svc.sign(SmartHomeCommandPayload {
+        let token = jwt_svc.sign(Claims {
             command: "toggle".to_owned(),
             id: "123".to_owned(),
+            ..Claims::default()
         })?;
         println!("token {}", token);
 
@@ -251,5 +245,36 @@ MwIDAQAB
         let claims = jwt_svc_verif.verify(&SMART_HOME_ACTION_REAL_TOKEN, false)?;
         println!("claims {:#?}", claims);
         Ok(())
+    }
+
+    // cargo test -- --show-output test_default
+    #[test]
+    fn test_default() {
+        #[derive(Debug, PartialEq)]
+        struct Foo {
+            foo: i32,
+            bar: i32,
+        }
+
+        impl Default for Foo {
+            fn default() -> Self {
+                Foo { foo: 123, bar: 0 }
+            }
+        }
+
+        // see https://doc.rust-lang.org/stable/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax
+        let my_foo = Foo {
+            bar: 456,
+            ..Foo::default()
+        };
+
+        // alternative syntax ..Foo::default() -> ..Default::default()
+        let my_foo2 = Foo {
+            bar: 789,
+            ..Default::default()
+        };
+
+        assert_eq!(my_foo, Foo { foo: 123, bar: 456 });
+        assert_eq!(my_foo2, Foo { foo: 123, bar: 789 });
     }
 }
