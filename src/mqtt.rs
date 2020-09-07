@@ -24,7 +24,7 @@ pub fn plain_client(
 mod tests {
     use super::*;
     use crate::aes::decrypt;
-    use crate::jwt::JWTService;
+    use crate::jwt::{JWTService, SmartHomeCommandPayload};
     use lazy_static::lazy_static;
     use serde::Deserialize;
     use std::default::Default;
@@ -41,6 +41,12 @@ mod tests {
             let mqtt = MQTT::new().unwrap_or_default();
             mqtt
         };
+        pub static ref MICROCONTROLLER_PUBLIC_KEY: String =
+            fs::read_to_string("./examples/testdata/microcontroller-pubkey.pem")
+                .unwrap_or("".to_owned());
+        pub static ref MICROCONTROLLER_PRIVATE_KEY: String =
+            fs::read_to_string("./examples/testdata/microcontroller-privkey.pem")
+                .unwrap_or("".to_owned());
     }
 
     #[derive(Debug, Deserialize, Default)]
@@ -156,8 +162,19 @@ mod tests {
             println!("decrypted payload from mqtt {}", decrypted_payload);
 
             let jwt_svc_verif = JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
-            let claims = jwt_svc_verif.verify(&decrypted_payload, false)?;
+            let claims = jwt_svc_verif.verify(&decrypted_payload, true)?;
             println!("token verified. claims {:#?}", claims);
+
+            let confirmation_payload = SmartHomeCommandPayload {
+                command: "confirmation".to_owned(),
+                id: claims.id,
+            };
+            let jwt_svc_signing = JWTService::new(
+                MICROCONTROLLER_PUBLIC_KEY.to_owned(),
+                Some(MICROCONTROLLER_PRIVATE_KEY.to_owned()),
+            );
+            let confirmation_token = jwt_svc_signing.sign(confirmation_payload)?;
+            println!("acknowledgment sent {}", confirmation_token);
 
             c.disconnect().await?;
             Ok(())

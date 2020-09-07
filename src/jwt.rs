@@ -22,7 +22,7 @@ pub struct Claims {
     command: String,
 
     /// request ID, should be returned in asynchronous response so that we can match the response to request
-    id: String,
+    pub id: String,
 }
 
 /// JWTService can be used for:
