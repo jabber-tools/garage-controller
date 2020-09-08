@@ -24,12 +24,17 @@ pub fn plain_client(
 mod tests {
     use super::*;
     use crate::aes::decrypt;
+    use crate::gpio;
+    use crate::init_logging; // set RUST_LOG=garage_controller::mqtt=debug
     use crate::jwt::{Claims, JWTService};
     use lazy_static::lazy_static;
+    use log::debug;
     use serde::Deserialize;
     use std::default::Default;
     use std::fmt::Debug;
     use std::fs;
+    use std::time::Duration;
+    use tokio::time::delay_for;
     use toml;
 
     lazy_static! {
@@ -185,6 +190,14 @@ mod tests {
             p.set_qos(QoS::AtMostOnce);
             c.publish(&p).await?;
             println!("acknowledgment sent!");
+
+            init_logging(); // enable logging so that we see timestamps when calling delay_for
+            let mut gpio = gpio::Gpio::new()?;
+            debug!("setting pin high");
+            gpio.set_pin_high();
+            delay_for(Duration::from_millis(1000)).await;
+            gpio.set_pin_low();
+            debug!("setting pin low");
 
             c.disconnect().await?;
             Ok(())

@@ -210,9 +210,11 @@ dependencies = [
 name = "garage-controller"
 version = "0.1.0"
 dependencies = [
+ "env_logger",
  "hex",
  "jsonwebtoken",
  "lazy_static",
+ "log",
  "mqtt-async-client",
  "rand 0.7.3",
  "rppal",
