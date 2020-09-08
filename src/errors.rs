@@ -83,10 +83,10 @@ impl From<mqtt_async_client::Error> for Error {
 }
 
 #[cfg(all(target_os = "unix"))]
-impl From<rppal::gpio::Erro> for Error {
-    fn from(error: rppal::gpio::Erro) -> Error {
+impl From<rppal::gpio::Error> for Error {
+    fn from(error: rppal::gpio::Error) -> Error {
         Error {
-            message: format!("rppal::gpio::Erro: {}", error),
+            message: format!("rppal::gpio::Error: {}", error),
         }
     }
 }
