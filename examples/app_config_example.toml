@@ -1,0 +1,15 @@
+[mqtt]
+host = "company.cloudmqtt.com"
+port = 12345
+username = "<<real user>>>"
+password = "<<real password>>>"
+
+[aes]
+key = "<<AES encryption,decryption key>>>"
+
+[smart_home]
+pub_key = "/path/to/smart-home/pub-key.pem"
+
+[microcontroller]
+pub_key = "/path/to/microcontroller/pub-key.pem"
+priv_key = "/path/to/microcontroller/pub-key.pem"

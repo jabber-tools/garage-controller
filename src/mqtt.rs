@@ -1,8 +1,4 @@
-use crate::errors::Result;
-use mqtt_async_client::client::{
-    Client, Publish, QoS, Subscribe, SubscribeTopic, Unsubscribe, UnsubscribeTopic,
-};
-
+use mqtt_async_client::{self, client::Client};
 use tokio::{self, time::Duration};
 
 pub fn plain_client(
@@ -24,14 +20,15 @@ pub fn plain_client(
 mod tests {
     use super::*;
     use crate::aes::decrypt;
+    use crate::errors::Result;
     use crate::gpio;
     use crate::init_logging; // set RUST_LOG=garage_controller::mqtt=debug
     use crate::jwt::{Claims, JWTService};
+    use crate::toml::{ApplicationConfiguration, MQTT};
     use lazy_static::lazy_static;
     use log::debug;
-    use serde::Deserialize;
+    use mqtt_async_client::client::{Publish, QoS, Subscribe, SubscribeTopic};
     use std::default::Default;
-    use std::fmt::Debug;
     use std::fs;
     use std::time::Duration;
     use tokio::time::delay_for;
@@ -43,7 +40,13 @@ mod tests {
         pub static ref AES_KEY: String =
             fs::read_to_string("./examples/testdata/aes.txt").unwrap_or("".to_owned());
         pub static ref MQTT_CONN: MQTT = {
-            let mqtt = MQTT::new().unwrap_or_default();
+            fn get_mqtt_config() -> crate::errors::Result<MQTT> {
+                let toml_str = std::fs::read_to_string("./examples/testdata/app_config.toml")?;
+                let toml = toml::from_str::<ApplicationConfiguration>(&toml_str)?;
+                Ok(toml.mqtt)
+            }
+
+            let mqtt = get_mqtt_config().unwrap_or_default();
             mqtt
         };
         pub static ref MICROCONTROLLER_PUBLIC_KEY: String =
@@ -52,27 +55,6 @@ mod tests {
         pub static ref MICROCONTROLLER_PRIVATE_KEY: String =
             fs::read_to_string("./examples/testdata/microcontroller-privkey.pem")
                 .unwrap_or("".to_owned());
-    }
-
-    #[derive(Debug, Deserialize, Default)]
-    struct TomlFile {
-        pub mqtt: MQTT,
-    }
-
-    #[derive(Debug, Deserialize, Default)]
-    pub struct MQTT {
-        host: String,
-        port: u16,
-        username: String,
-        password: String,
-    }
-
-    impl MQTT {
-        fn new() -> crate::errors::Result<Self> {
-            let toml_str = std::fs::read_to_string("./examples/testdata/mqtt.toml")?;
-            let toml = toml::from_str::<TomlFile>(&toml_str)?;
-            Ok(toml.mqtt)
-        }
     }
 
     // cargo test -- --show-output test_plain_client

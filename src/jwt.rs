@@ -227,7 +227,10 @@ MwIDAQAB
         let claims = jwt_svc_verif.verify(&token, true);
 
         match claims {
-            Ok(claims) => panic!("test_sign_corrupt_fail_to_verify expected error"),
+            Ok(claims) => panic!(format!(
+                "test_sign_corrupt_fail_to_verify expected error, got claims: {:#?}",
+                claims
+            )),
             Err(error) => assert_eq!(
                 error.message.contains("Base64 error: Invalid last symbol"),
                 true

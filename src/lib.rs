@@ -7,6 +7,7 @@ pub mod gpio;
 
 pub mod jwt;
 pub mod mqtt;
+pub mod toml;
 
 /// Utility function to enable log::debug logging in unit tests
 pub fn init_logging() {
