@@ -1,7 +1,7 @@
 pub mod aes;
 pub mod errors;
 
-#[cfg_attr(all(target_os = "unix", target_arch = "arm"), path = "gpio.rs")]
+#[cfg_attr(all(target_os = "unix"), path = "gpio.rs")]
 #[cfg_attr(windows, path = "gpio_mock.rs")]
 pub mod gpio;
 

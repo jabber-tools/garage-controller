@@ -1,5 +1,7 @@
 use crypto::symmetriccipher;
 use hex;
+#[cfg(all(target_os = "unix"))]
+use rppal;
 use std::result;
 use toml;
 
@@ -76,6 +78,15 @@ impl From<mqtt_async_client::Error> for Error {
     fn from(error: mqtt_async_client::Error) -> Error {
         Error {
             message: format!("mqtt_async_client:Error: {}", error),
+        }
+    }
+}
+
+#[cfg(all(target_os = "unix"))]
+impl From<rppal::gpio::Erro> for Error {
+    fn from(error: rppal::gpio::Erro) -> Error {
+        Error {
+            message: format!("rppal::gpio::Erro: {}", error),
         }
     }
 }
