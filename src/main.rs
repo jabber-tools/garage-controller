@@ -117,6 +117,12 @@ fn main() -> Result<()> {
             let confirmation_token = jwt_svc_signing.sign(confirmation_payload)?;
             debug!("acknowledgment prepared {}", confirmation_token);
 
+            debug!("setting pin high");
+            gpio.set_pin_high();
+            delay_for(Duration::from_millis(400)).await;
+            gpio.set_pin_low();
+            debug!("setting pin low, sending acknowledgment to smart-home");
+
             // Publish
             let mut p = Publish::new(
                 "garage/toggleConfirm".to_owned(),
@@ -125,13 +131,8 @@ fn main() -> Result<()> {
             p.set_qos(QoS::AtMostOnce);
             c.publish(&p).await?;
             debug!("acknowledgment sent!");
+        } // main microcontroller loop
 
-            debug!("setting pin high");
-            gpio.set_pin_high();
-            delay_for(Duration::from_millis(400)).await;
-            gpio.set_pin_low();
-            debug!("setting pin low");
-        }
         // just so that async block return value can be infered
         // currently no way how to specify async block ret value like for asyn fn, must use turbo fish
         // https://rust-lang.github.io/async-book/07_workarounds/03_err_in_async_blocks.html
