@@ -1,6 +1,10 @@
 pub mod aes;
 pub mod errors;
 
+// rustfmt does not understand path properly:( cargo fmt will cause content of gpio_mock.rs
+// to be replaced with gpio.rs! Similar issue described here: https://github.com/rust-lang/rustfmt/issues/2407
+// luckily we will always find this during compilation on windows since rppal is not in windows dependencies
+// and hence code will not compile
 #[cfg_attr(all(target_family = "unix", target_arch = "arm"), path = "gpio.rs")]
 #[cfg_attr(
     all(target_family = "unix", target_arch = "x86"),
@@ -19,7 +23,5 @@ pub mod toml;
 
 /// Utility function to enable log::debug logging in unit tests
 pub fn init_logging() {
-    // enable in unit/integration tests selectively only when needed!
-    // set RUST_LOG=gdf_translate::google::gcloud::storage_bucket_mgmt=debug
     let _ = env_logger::builder().is_test(true).try_init();
 }
