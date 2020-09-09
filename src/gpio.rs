@@ -8,6 +8,7 @@ use rppal;
 const OUTPUT_PINT: u8 = 4;
 
 pub struct Gpio {
+    #[allow(dead_code)]
     gpio_handler: rppal::gpio::Gpio,
     pin: rppal::gpio::OutputPin,
 }
