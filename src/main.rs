@@ -40,23 +40,32 @@ fn main() -> Result<()> {
     env_logger::init();
     debug!("Starting microcontroller");
 
+    #[allow(non_snake_case)]
     let APP_CONFIG: ApplicationConfiguration =
         ApplicationConfiguration::new("/tmp/smart-home/app_config.toml").unwrap(); // TODO: read toml file path from command line
+
+    #[allow(non_snake_case)]
     let SMART_HOME_ACTION_PUBLIC_KEY: String = {
         let result = fs::read_to_string(APP_CONFIG.smart_home.pub_key.to_owned());
         eval_error!(result, "unable to load smart home public key");
         result.unwrap()
     };
+
+    #[allow(non_snake_case)]
     let MICROCONTROLLER_PUBLIC_KEY: String = {
         let result = fs::read_to_string(APP_CONFIG.microcontroller.pub_key.to_owned());
         eval_error!(result, "unable to load microcontroller public key");
         result.unwrap()
     };
+
+    #[allow(non_snake_case)]
     let MICROCONTROLLER_PRIV_KEY: String = {
         let result = fs::read_to_string(APP_CONFIG.microcontroller.priv_key.to_owned());
         eval_error!(result, "unable to load microcontroller private key");
         result.unwrap()
     };
+
+    #[allow(non_snake_case)]
     let AES_KEY: String = APP_CONFIG.aes.key.to_owned();
 
     debug!(
