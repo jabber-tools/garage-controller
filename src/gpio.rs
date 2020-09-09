@@ -26,11 +26,15 @@ impl Gpio {
 
     pub fn set_pin_high(&mut self) {
         debug!("Setting pin HIGH");
-        self.pin.set_high();
+        // based on test with real raspberry 3b
+        // we need to call set_low to set the pin actually high
+        self.pin.set_low();
     }
 
     pub fn set_pin_low(&mut self) {
         debug!("Setting pin LOW");
-        self.pin.set_low();
+        // based on test with real raspberry 3b
+        // we need to call set_high to set the pin actually low
+        self.pin.set_high();
     }
 }
