@@ -6,7 +6,6 @@ use garage_controller::{
     mqtt,
     toml::*,
 };
-use lazy_static::lazy_static;
 use log::debug;
 use mqtt_async_client::client::{Client, Publish, QoS, Subscribe, SubscribeTopic};
 use std::fs;
@@ -14,50 +13,67 @@ use std::process;
 use std::time::Duration;
 use tokio::time::delay_for;
 
-lazy_static! {
-    pub static ref APP_CONFIG: ApplicationConfiguration =
-        ApplicationConfiguration::new("/tmp/smart-home/app_config.toml").unwrap(); // TODO: read toml file path from command line
-    pub static ref SMART_HOME_ACTION_PUBLIC_KEY: String = {
-        let result = fs::read_to_string(APP_CONFIG.smart_home.pub_key.to_owned());
-        if let Err(err) = result {
-            debug!("unable to load smart home public key");
+///
+/// Convenience macro to replace following boilerplate:
+///
+/// if let Err(err) = result {
+///    debug!("unable to load smart home public key");
+///    debug!("error detail {}", err);
+///    process::exit(1);
+/// }
+///
+/// with:
+/// eval_error!(result, "unable to load smart home public key");
+///
+macro_rules! eval_error {
+    ($result:expr, $msg:expr) => {
+        if let Err(err) = $result {
+            debug!($msg);
             debug!("error detail {}", err);
             process::exit(1);
         }
-        result.unwrap()
     };
-    pub static ref MICROCONTROLLER_PUBLIC_KEY: String = {
-        let result = fs::read_to_string(APP_CONFIG.microcontroller.pub_key.to_owned());
-        if let Err(err) = result {
-            debug!("unable to load microcontroller public key");
-            debug!("error detail {}", err);
-            process::exit(1);
-        }
-        result.unwrap()
-    };
-    pub static ref MICROCONTROLLER_PRIV_KEY: String = {
-        let result = fs::read_to_string(APP_CONFIG.microcontroller.priv_key.to_owned());
-        if let Err(err) = result {
-            debug!("unable to load microcontroller private key");
-            debug!("error detail {}", err);
-            process::exit(1);
-        }
-        result.unwrap()
-    };
-    pub static ref AES_KEY: String = APP_CONFIG.aes.key.to_owned();
 }
 
 /// initial hardcoded version of main for preliminary testing
 fn main() -> Result<()> {
     env_logger::init();
-    debug!("Starting processing loop!");
+    debug!("Starting microcontroller");
+
+    let APP_CONFIG: ApplicationConfiguration =
+        ApplicationConfiguration::new("/tmp/smart-home/app_config.toml").unwrap(); // TODO: read toml file path from command line
+    let SMART_HOME_ACTION_PUBLIC_KEY: String = {
+        let result = fs::read_to_string(APP_CONFIG.smart_home.pub_key.to_owned());
+        eval_error!(result, "unable to load smart home public key");
+        result.unwrap()
+    };
+    let MICROCONTROLLER_PUBLIC_KEY: String = {
+        let result = fs::read_to_string(APP_CONFIG.microcontroller.pub_key.to_owned());
+        eval_error!(result, "unable to load microcontroller public key");
+        result.unwrap()
+    };
+    let MICROCONTROLLER_PRIV_KEY: String = {
+        let result = fs::read_to_string(APP_CONFIG.microcontroller.priv_key.to_owned());
+        eval_error!(result, "unable to load microcontroller private key");
+        result.unwrap()
+    };
+    let AES_KEY: String = APP_CONFIG.aes.key.to_owned();
+
+    debug!(
+        "SMART_HOME_ACTION_PUBLIC_KEY: {}",
+        APP_CONFIG.smart_home.pub_key
+    );
+    debug!(
+        "MICROCONTROLLER_PUBLIC_KEY:   {}",
+        APP_CONFIG.microcontroller.pub_key
+    );
+    debug!(
+        "MICROCONTROLLER_PRIV_KEY:     {}",
+        APP_CONFIG.microcontroller.priv_key
+    );
 
     let rt = tokio::runtime::Runtime::new();
-    if let Err(err) = rt {
-        debug!("unable to initiate tokio runtime");
-        debug!("error detail {}", err);
-        process::exit(1);
-    }
+    eval_error!(rt, "unable to initiate tokio runtime");
 
     let c: mqtt_async_client::Result<Client> = mqtt::plain_client(
         &APP_CONFIG.mqtt.host,
@@ -65,20 +81,13 @@ fn main() -> Result<()> {
         &APP_CONFIG.mqtt.username,
         &APP_CONFIG.mqtt.password,
     );
-    if let Err(err) = c {
-        debug!("unable to initiate mqtt client");
-        debug!("error detail {}", err);
-        process::exit(1);
-    }
+    eval_error!(c, "unable to initiate mqtt client");
+
     let mut c = c.unwrap();
 
     rt.unwrap().block_on(async {
         let conn_result = c.connect().await;
-        if let Err(conn_err) = conn_result {
-            debug!("unable to connect to MQTT server");
-            debug!("error detail {}", conn_err);
-            process::exit(1);
-        }
+        eval_error!(conn_result, "unable to connect to MQTT server");
 
         let subopts = Subscribe::new(vec![SubscribeTopic {
             qos: QoS::AtMostOnce,
@@ -89,6 +98,7 @@ fn main() -> Result<()> {
 
         let mut gpio = gpio::Gpio::new()?;
 
+        debug!("Starting main processing loop!");
         loop {
             debug!("waiting for new messages on topic garage/toggle");
             // Read subscription
