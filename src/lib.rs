@@ -2,8 +2,14 @@ pub mod aes;
 pub mod errors;
 
 #[cfg_attr(all(target_family = "unix", target_arch = "arm"), path = "gpio.rs")]
-#[cfg_attr(all(target_family = "unix", target_arch = "x86"), path = "gpio_mock.rs")]
-#[cfg_attr(all(target_family = "unix", target_arch = "x86_64"), path = "gpio_mock.rs")]
+#[cfg_attr(
+    all(target_family = "unix", target_arch = "x86"),
+    path = "gpio_mock.rs"
+)]
+#[cfg_attr(
+    all(target_family = "unix", target_arch = "x86_64"),
+    path = "gpio_mock.rs"
+)]
 #[cfg_attr(windows, path = "gpio_mock.rs")]
 pub mod gpio;
 
