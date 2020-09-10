@@ -107,6 +107,11 @@ fn main() -> Result<()> {
 
         let mut gpio = gpio::Gpio::new()?;
 
+        // set the PIN initially LOW
+        debug!("setting relay PIN initially LOW");
+        gpio.set_pin_low();
+        debug!("setting relay PIN initially LOW - done");
+
         debug!("Starting main processing loop!");
         loop {
             debug!("waiting for new messages on topic garage/toggle");
