@@ -16,6 +16,13 @@ pub fn plain_client(
         .build()
 }
 
+pub async fn read_subscriptions(
+    client: &mut Client,
+) -> mqtt_async_client::Result<mqtt_async_client::client::ReadResult> {
+    let result = client.read_subscriptions().await?;
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

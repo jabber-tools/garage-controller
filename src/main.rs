@@ -1,17 +1,15 @@
+use ctrlc;
 use garage_controller::{
-    aes::*,
+    aes,
     errors::{Error, Result},
-    gpio,
-    jwt::*,
-    mqtt,
-    toml::*,
+    gpio, jwt, mqtt,
+    toml::ApplicationConfiguration,
 };
-use log::debug;
+use log::{debug, trace};
 use mqtt_async_client::client::{Client, Publish, QoS, Subscribe, SubscribeTopic};
-use std::fs;
-use std::process;
-use std::time::Duration;
-use tokio::time::delay_for;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::{fs, process, sync::Arc};
+use tokio::time::{delay_for, timeout, Duration};
 
 ///
 /// Convenience macro to replace following boilerplate:
@@ -112,29 +110,52 @@ fn main() -> Result<()> {
         gpio.set_pin_low();
         debug!("setting relay PIN initially LOW - done");
 
+        let running = Arc::new(AtomicBool::new(true));
+        let r = running.clone();
+
+        ctrlc::set_handler(move || {
+            debug!("SIGINT/CTRL_C_EVENT/CTRL_BREAK_EVENT detected, terminating main loop");
+            r.store(false, Ordering::SeqCst);
+        })
+        .expect("Error setting Ctrl-C handler");
+
         debug!("Starting main processing loop!");
-        loop {
-            debug!("waiting for new messages on topic garage/toggle");
-            // Read subscription
-            let r = c.read_subscriptions().await?;
+        while running.load(Ordering::SeqCst) {
+            trace!("waiting for new messages on topic garage/toggle");
+
+            // Read subscription with timeout to enable ctrl+c to be handled continuously
+            let r = timeout(Duration::from_secs(1), mqtt::read_subscriptions(&mut c)).await;
+            if r.is_err() {
+                trace!("read_subscriptions timeout, continuing to allow potential ctrlc.");
+                continue;
+            }
+            let r = r.unwrap();
+            eval_error!(r, "unable to read subscriptions from MQTT server");
+            let r = r.unwrap();
+
+            // Read subscription in "blocking/awaiting way" with no timeout.
+            // asynchronous block will be waiting here forever unless it receives
+            // mqtt message to process (preventing ctrl+c condition in while loop being evaluated)
+            // this works fine until we want to support ctrl+c handler
+            // let r = mqtt::read_subscriptions(&mut c).await?;
             assert_eq!(r.topic(), "garage/toggle");
 
             let payload = String::from_utf8(r.payload().to_vec())?;
             debug!("original payload from mqtt {}", payload);
 
-            let decrypted_payload = decrypt(&payload, &AES_KEY)?;
+            let decrypted_payload = aes::decrypt(&payload, &AES_KEY)?;
             debug!("decrypted payload from mqtt {}", decrypted_payload);
 
-            let jwt_svc_verif = JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
+            let jwt_svc_verif = jwt::JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
             let claims = jwt_svc_verif.verify(&decrypted_payload, true)?;
             debug!("token verified. claims {:#?}", claims);
 
-            let confirmation_payload = Claims {
+            let confirmation_payload = jwt::Claims {
                 command: "confirmation".to_owned(),
                 id: claims.id,
-                ..Claims::default()
+                ..jwt::Claims::default()
             };
-            let jwt_svc_signing = JWTService::new(
+            let jwt_svc_signing = jwt::JWTService::new(
                 MICROCONTROLLER_PUBLIC_KEY.to_owned(),
                 Some(MICROCONTROLLER_PRIV_KEY.to_owned()),
             );
@@ -160,8 +181,8 @@ fn main() -> Result<()> {
         // just so that async block return value can be infered
         // currently no way how to specify async block ret value like for asyn fn, must use turbo fish
         // https://rust-lang.github.io/async-book/07_workarounds/03_err_in_async_blocks.html
-        #[allow(unreachable_code)]
         Ok::<(), Error>(())
     })?;
+    debug!("main processing loop finished, quiting now. bye!");
     Ok(())
 }
