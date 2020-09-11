@@ -20,17 +20,17 @@ Microcontroller software for Raspberry Pi. Based on commands received from MQTT 
 ## High Level Setup
 <img src="./examples/docs/img/e2e.png" /></br>
 
-*	User says open garage door
-*	Virtual assistant translates the voice to text (via natural language understanding) and then performs natural language processing in order to understand user’s intent. Intent is understood (user wants to open garage door)
-*	Appropriate fulfillment function (running as HTTP webservice deployed on internet) is called by virtual assistant (i.e. function handleIntentOpenGarage). This function will
-       *	Prepare payload for OpenGarage message
+*	User says *open garage door*
+*	Virtual assistant translates the voice to text understand user’s intent via NLP.
+*	Appropriate fulfillment function (running as HTTP webservice deployed on public cloud provider) is called by virtual assistant. This function will:
+       *	Prepare payload for *ToggleGarage* message
        *	Digitally sign it to ensure message integrity. For this JWT (JSON Web tokens, see https://jwt.io/) technology is used
-       *	Publishes/puts the message into appropriate queue in MQTT provider. Connection to MQTT provider is secure, i.e. apart from message security also transport layer is secured. MQTT provider is further secured with username/password credentials, i.e. only authorized user can publish to MQTT queue
-*	Microcontroller is running MQTT client library and subscribing to MQTT queue. Once it receives the message from MQTT queue appropriate processing will happen:
+       *	Publishes the message into appropriate queue in public-cloud MQTT provider. 
+*	Microcontroller is running MQTT client library and subscribing to MQTT queue. Once it receives the message, appropriate processing will happen:
        * Message is decrypted and verified (both age of the message and digital signature). 
        * Invalid messages are rejected and not processed further.
-       * Valid messages are processed. HIGH signal is send for 400 ms into relay input pin
-*	Normally open gate of the relay is closed for 400 ms causing electrical circuit to get closed and electricity to flow in remote garage door controller into soldered pin (from internal battery). This has basically same effect as if user pressed button on remote controller. 
+       * Valid messages are processed. HIGH signal is send for 400 ms into relay input pin. Then pin is set back to LOW value.
+*	*Normally open gate* of the relay is closed for 400 ms causing electrical circuit to get closed and electricity to flow in remote garage door controller into soldered pin. This has basically same effect as if user pressed button on remote controller. 
 *	Wireless signal is sent to garage door engine and door is open
 
 
