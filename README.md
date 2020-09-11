@@ -35,7 +35,7 @@ Microcontroller software for Raspberry Pi. Based on commands received from MQTT 
 
 
 ## GPIO PIN Setup
-TBD</br>
+Pin 7 (GPIO.BOARD layout)/GPIO04 (GPIO.BCM layout) is connected to digital input of relay. NO gate and COM gate are connected to pins of disassembled remote controller of garage door.</br>
 <img height="200" src="./examples/docs/img/pin_setup.png" /></br>
 
 ## Cross-compilation on ARMv6 and ARMv7 architectures
