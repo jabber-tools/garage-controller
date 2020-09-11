@@ -124,6 +124,12 @@ fn main() -> Result<()> {
         })
         .expect("Error setting Ctrl-C handler");
 
+        let jwt_svc_verif = jwt::JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
+        let jwt_svc_signing = jwt::JWTService::new(
+            MICROCONTROLLER_PUBLIC_KEY.to_owned(),
+            Some(MICROCONTROLLER_PRIV_KEY.to_owned()),
+        );
+
         debug!("Starting main processing loop!");
         while running.load(Ordering::SeqCst) {
             trace!("waiting for new messages on topic garage/toggle");
@@ -151,7 +157,6 @@ fn main() -> Result<()> {
             let decrypted_payload = aes::decrypt(&payload, &AES_KEY)?;
             debug!("decrypted payload from mqtt {}", decrypted_payload);
 
-            let jwt_svc_verif = jwt::JWTService::new(SMART_HOME_ACTION_PUBLIC_KEY.to_owned(), None);
             let claims = jwt_svc_verif.verify(&decrypted_payload, true)?;
             debug!("token verified. claims {:#?}", claims);
 
@@ -160,10 +165,7 @@ fn main() -> Result<()> {
                 id: claims.id,
                 ..jwt::Claims::default()
             };
-            let jwt_svc_signing = jwt::JWTService::new(
-                MICROCONTROLLER_PUBLIC_KEY.to_owned(),
-                Some(MICROCONTROLLER_PRIV_KEY.to_owned()),
-            );
+
             let confirmation_token = jwt_svc_signing.sign(confirmation_payload)?;
             debug!("acknowledgment prepared {}", confirmation_token);
 
