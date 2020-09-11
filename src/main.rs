@@ -1,6 +1,7 @@
 use ctrlc;
 use garage_controller::{
     aes,
+    cli::{get_cmd_line_parser, get_cmdl_options},
     errors::{Error, Result},
     gpio, jwt, mqtt,
     toml::ApplicationConfiguration,
@@ -36,11 +37,15 @@ macro_rules! eval_error {
 /// initial hardcoded version of main for preliminary testing
 fn main() -> Result<()> {
     env_logger::init();
+
+    let cmd_line_matches = get_cmd_line_parser().get_matches();
+    let cmd_line_opts = get_cmdl_options(&cmd_line_matches);
+
     debug!("Starting microcontroller");
 
     #[allow(non_snake_case)]
     let APP_CONFIG: ApplicationConfiguration =
-        ApplicationConfiguration::new("/tmp/smart-home/app_config.toml").unwrap(); // TODO: read toml file path from command line
+        ApplicationConfiguration::new(cmd_line_opts.app_config_path.to_str().unwrap())?;
 
     #[allow(non_snake_case)]
     let SMART_HOME_ACTION_PUBLIC_KEY: String = {

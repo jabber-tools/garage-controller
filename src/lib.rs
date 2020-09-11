@@ -1,4 +1,5 @@
 pub mod aes;
+pub mod cli;
 pub mod errors;
 
 // rustfmt does not understand path properly:( cargo fmt will cause content of gpio_mock.rs
