@@ -9,8 +9,6 @@
 
 Microcontroller software for Raspberry Pi. Based on commands received from MQTT opens/closes garage door utilizing wireless garage door controller connected to GPIO.
 
-[Cross-compilation on ARMv6 and ARMv7 architectures(#introduction)
-
 [High Level Setup](#high-level-setup)
 
 [GPIO PIN Setup](#gpio-pin-setup)
@@ -20,12 +18,12 @@ Microcontroller software for Raspberry Pi. Based on commands received from MQTT 
 [Compiling RPPAL library](#compiling-rppal-library)
 
 ## High Level Setup
-TBD
-<img width="600" height="200" src="./examples/docs/img/e2e.png" /></br>
+TBD</br>
+<img src="./examples/docs/img/e2e.png" /></br>
 
 ## GPIO PIN Setup
-TBD
-<img width="600" height="200" src="./examples/docs/img/pin_setup.png" /></br>
+TBD</br>
+<img height="200" src="./examples/docs/img/pin_setup.png" /></br>
 
 ## Cross-compilation on ARMv6 and ARMv7 architectures
 See [https://github.com/japaric/rust-cross](https://github.com/japaric/rust-cross)
