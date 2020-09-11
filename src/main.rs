@@ -34,7 +34,6 @@ macro_rules! eval_error {
     };
 }
 
-/// initial hardcoded version of main for preliminary testing
 fn main() -> Result<()> {
     env_logger::init();
 
