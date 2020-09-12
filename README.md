@@ -68,6 +68,20 @@ cargo build --target=arm-unknown-linux-gnueabihf
 ```
 Nice details on compilation for Raspberry Pi Zero (ARMv6) can be found [here](https://disconnected.systems/blog/rust-powered-rover/#setting-up-rust-for-cross-compiling).
 
+### Compiling RPPAL library
+In order to compile following dependency [RPPAL](https://github.com/golemparts/rppal) CC compiler must be installed otherwise following error will be thrown:
+error: linker `cc` not found
+could not compile `libc`.
+
+Details [here](https://ostechnix.com/how-to-fix-rust-error-linker-cc-not-found-on-linux/)
+
+Solution is to run following command:
+```
+sudo apt install build-essential
+```
+Nice article on rust cross-compilation to arm architecture can be also found here [here](https://www.growse.com/2020/04/26/adventures-in-rust-and-cross-compilation-for-the-raspberry-pi.html).
+
+
 ### Out-of-the-box cross-compilation setup
 While manual procedure described above works fine for AMR7, AMR6 was not working. Cross-compilation using target *arm-unknown-linux-gnueabihf* finished without error but executable was crashing on Raspberry Pi Zero W with error *Illegal Instruction*. This almost seems as if it was in fact compiled into ARM7 which has additional instructions (i.e. non-compatible with ARM6).
 Because of this it is better to use out of the box docker images with all compilation targets preconfigured properly:) (together with rustc, git, ssh etc.).
@@ -108,17 +122,3 @@ cargo build --target=armv7-unknown-linux-gnueabihf
 scp garage-controller pi@192.168.1.104:/tmp
 
 ```
-
-## Compiling RPPAL library
-In order to compile following dependency [RPPAL](https://github.com/golemparts/rppal) CC compiler must be installed otherwise following error will be thrown:
-error: linker `cc` not found
-could not compile `libc`.
-
-Details [here](https://ostechnix.com/how-to-fix-rust-error-linker-cc-not-found-on-linux/)
-
-Solution is to run following command:
-```
-sudo apt install build-essential
-```
-Nice article on rust cross-compilation to arm architecture can be also found here [here](https://www.growse.com/2020/04/26/adventures-in-rust-and-cross-compilation-for-the-raspberry-pi.html).
-
