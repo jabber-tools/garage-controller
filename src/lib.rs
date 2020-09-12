@@ -2,21 +2,17 @@ pub mod aes;
 pub mod cli;
 pub mod errors;
 
-// rustfmt does not understand path properly:( cargo fmt will cause content of gpio_mock.rs
-// to be replaced with gpio.rs! Similar issue described here: https://github.com/rust-lang/rustfmt/issues/2407
-// luckily we will always find this during compilation on windows since rppal is not in windows dependencies
-// and hence code will not compile
-#[cfg_attr(all(target_family = "unix", target_arch = "arm"), path = "gpio.rs")]
-#[cfg_attr(
-    all(target_family = "unix", target_arch = "x86"),
-    path = "gpio_mock.rs"
-)]
-#[cfg_attr(
-    all(target_family = "unix", target_arch = "x86_64"),
-    path = "gpio_mock.rs"
-)]
-#[cfg_attr(windows, path = "gpio_mock.rs")]
+#[cfg(all(target_family = "unix", target_arch = "arm"))]
 pub mod gpio;
+
+#[cfg(not(all(target_family = "unix", target_arch = "arm")))]
+pub mod gpio_mock;
+
+#[cfg(all(target_family = "unix", target_arch = "arm"))]
+pub use gpio;
+
+#[cfg(not(all(target_family = "unix", target_arch = "arm")))]
+pub use gpio_mock as gpio;
 
 pub mod jwt;
 pub mod mqtt;
