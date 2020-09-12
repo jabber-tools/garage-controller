@@ -71,7 +71,7 @@ Nice details on compilation for Raspberry Pi Zero (ARMv6) can be found [here](ht
 ### Out-of-the-box cross-compilation setup
 While manual procedure described above works fine for AMR7, AMR6 was not working. Cross-compilation using target *arm-unknown-linux-gnueabihf* finished without error but executable was crashing on Raspberry Pi Zero W with error *Illegal Instruction*. This almost seems as if it was in fact compiled into ARM7 which has additional instructions (i.e. non-compatible with ARM6).
 Because of this it is better to use out of the box docker images with all compilation targets preconfigured properly:) (together with rustc, git, ssh etc.).
-Details described [here](https://hub.docker.com/r/piersfinlayson/build). Basically:
+Details described [here](https://piers.rocks/docker/containers/raspberry/pi/rust/cross/compile/compilation/2018/12/16/rust-compilation-for-raspberry-pi.html), respective docker container described [here](https://hub.docker.com/r/piersfinlayson/build). Basically:
 
 ```
 docker pull piersfinlayson/build
