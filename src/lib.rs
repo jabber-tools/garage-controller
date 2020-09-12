@@ -3,13 +3,13 @@ pub mod cli;
 pub mod errors;
 
 #[cfg(all(target_family = "unix", target_arch = "arm"))]
-pub mod gpio;
+pub mod gpio_arm;
 
 #[cfg(not(all(target_family = "unix", target_arch = "arm")))]
 pub mod gpio_mock;
 
 #[cfg(all(target_family = "unix", target_arch = "arm"))]
-pub use gpio;
+pub use gpio_arm as gpio;
 
 #[cfg(not(all(target_family = "unix", target_arch = "arm")))]
 pub use gpio_mock as gpio;
