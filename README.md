@@ -39,6 +39,7 @@ Pin 7 (GPIO.BOARD layout)/GPIO04 (GPIO.BCM layout) is connected to digital input
 <img height="200" src="./examples/docs/img/pin_setup.png" /></br>
 
 ## Cross-compilation on ARMv6 and ARMv7 architectures
+### Manual cross-compilation setup
 See [https://github.com/japaric/rust-cross](https://github.com/japaric/rust-cross)
 ```
 sudo apt-get update
@@ -66,6 +67,47 @@ cargo build --target=armv7-unknown-linux-gnueabihf
 cargo build --target=arm-unknown-linux-gnueabihf
 ```
 Nice details on compilation for Raspberry Pi Zero (ARMv6) can be found [here](https://disconnected.systems/blog/rust-powered-rover/#setting-up-rust-for-cross-compiling).
+
+### Out-of-the-box cross-compilation setup
+While manual procedure described above works fine for AMR7, AMR6 was not working. Cross-compilation using target *arm-unknown-linux-gnueabihf* finished without error but executable was crashing on Raspberry Pi Zero W with error *Illegal Instruction*. This almost seems as if it was in fact compiled into ARM7 which has additional instructions (i.e. non-compatible with ARM6).
+Because of this it is better to use out of the box docker images with all compilation targets preconfigured properly:) (together with rustc, git, ssh etc.).
+Details described [here](https://hub.docker.com/r/piersfinlayson/build). Basically:
+
+```
+docker pull piersfinlayson/build
+
+docker run --rm -ti -v ~/builds:/home/build/builds piersfinlayson/build
+
+build@f435ef72a98f:~$ pwd
+/home/build
+build@f435ef72a98f:~$ cat ~/.cargo/config
+[target.x86_64-unknown-linux-gnu]
+linker = "x86_64-linux-gnu-gcc"
+
+[target.x86_64-unknown-linux-musl]
+linker = "x86_64-linux-musl-gcc"
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-linux-gnueabihf-gcc"
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "armv7-linux-musleabihf-gcc"
+
+[target.arm-unknown-linux-gnueabihf]
+linker = "armv6-linux-gnueabihf-gcc"
+
+[target.arm-unknown-linux-musleabihf]
+linker = "armv6-linux-musleabihf-gcc"
+
+
+# compile to ARM6 or ARM7
+cargo build --target=arm-unknown-linux-gnueabihf
+cargo build --target=armv7-unknown-linux-gnueabihf
+
+# copy to respective Raspberry Pi using scp command
+scp garage-controller pi@192.168.1.104:/tmp
+
+```
 
 ## Compiling RPPAL library
 In order to compile following dependency [RPPAL](https://github.com/golemparts/rppal) CC compiler must be installed otherwise following error will be thrown:
