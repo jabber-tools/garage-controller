@@ -7,7 +7,7 @@ use garage_controller::{
     toml::ApplicationConfiguration,
 };
 use log::{debug, trace};
-use mqtt_async_client::client::{Client, Publish, QoS, Subscribe, SubscribeTopic};
+use mqtt_async_client::client::{Client, QoS, Subscribe, SubscribeTopic};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::{fs, process, sync::Arc};
 use tokio::time::{delay_for, timeout, Duration};
@@ -174,13 +174,7 @@ fn main() -> Result<()> {
             gpio.set_pin_low();
             debug!("setting pin low, sending acknowledgment to smart-home");
 
-            // Publish
-            let mut p = Publish::new(
-                "garage/toggleConfirm".to_owned(),
-                confirmation_token.as_bytes().to_vec(),
-            );
-            p.set_qos(QoS::AtMostOnce);
-            c.publish(&p).await?;
+            mqtt::publish(confirmation_token, "garage/toggleConfirm".to_owned(), &c).await?;
             debug!("acknowledgment sent!");
         } // main microcontroller loop
 

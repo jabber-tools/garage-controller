@@ -1,4 +1,7 @@
-use mqtt_async_client::{self, client::Client};
+use mqtt_async_client::{
+    self,
+    client::{Client, Publish, QoS},
+};
 use tokio::{self, time::Duration};
 
 pub fn plain_client(
@@ -21,6 +24,13 @@ pub async fn read_subscriptions(
 ) -> mqtt_async_client::Result<mqtt_async_client::client::ReadResult> {
     let result = client.read_subscriptions().await?;
     Ok(result)
+}
+
+pub async fn publish(data: String, topic: String, c: &Client) -> mqtt_async_client::Result<()> {
+    let mut p = Publish::new(topic, data.as_bytes().to_vec());
+    p.set_qos(QoS::AtMostOnce);
+    c.publish(&p).await?;
+    Ok(())
 }
 
 #[cfg(test)]
