@@ -10,4 +10,4 @@ export RUST_LOG=debug
 sudo route add default gw 192.168.1.1
 
 #run the app!
-./garage-controller --config-file ./app_config.toml
+nohup ./garage-controller --config-file ./app_config.toml > garage-controller.log &
