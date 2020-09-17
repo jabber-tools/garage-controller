@@ -35,12 +35,12 @@ macro_rules! eval_error {
 }
 
 fn main() -> Result<()> {
-    garage_controller::init_logging();
 
     let cmd_line_matches = get_cmd_line_parser().get_matches();
     let cmd_line_opts = get_cmdl_options(&cmd_line_matches);
 
     debug!("Starting microcontroller");
+    garage_controller::init_logging();
 
     #[allow(non_snake_case)]
     let APP_CONFIG: ApplicationConfiguration =
