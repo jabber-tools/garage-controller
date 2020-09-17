@@ -39,11 +39,11 @@ mod tests {
     use crate::aes::decrypt;
     use crate::errors::Result;
     use crate::gpio;
-    use crate::init_logging; // set RUST_LOG=garage_controller::mqtt=debug
+    use crate::init_logging;
     use crate::jwt::{Claims, JWTService};
     use crate::toml::{ApplicationConfiguration, MQTT};
     use lazy_static::lazy_static;
-    use log::debug;
+    use log::info;
     use mqtt_async_client::client::{Publish, QoS, Subscribe, SubscribeTopic};
     use std::default::Default;
     use std::fs;
@@ -137,6 +137,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_sub_real_smart_home_msg() -> Result<()> {
+        init_logging();
         let mut rt = tokio::runtime::Runtime::new()?;
         rt.block_on(async {
             let mut c = plain_client(
@@ -190,13 +191,12 @@ mod tests {
             c.publish(&p).await?;
             println!("acknowledgment sent!");
 
-            init_logging(); // enable logging so that we see timestamps when calling delay_for
             let mut gpio = gpio::Gpio::new()?;
-            debug!("setting pin high");
+            info!("setting pin high");
             gpio.set_pin_high();
             delay_for(Duration::from_millis(1000)).await;
             gpio.set_pin_low();
-            debug!("setting pin low");
+            info!("setting pin low");
 
             c.disconnect().await?;
             Ok(())

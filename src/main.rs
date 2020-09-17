@@ -35,7 +35,7 @@ macro_rules! eval_error {
 }
 
 fn main() -> Result<()> {
-    env_logger::init();
+    garage_controller::init_logging();
 
     let cmd_line_matches = get_cmd_line_parser().get_matches();
     let cmd_line_opts = get_cmdl_options(&cmd_line_matches);

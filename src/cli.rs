@@ -14,7 +14,7 @@ impl<'a> CommandLine<'a> {
 
 pub fn get_cmd_line_parser<'a, 'b>() -> App<'a, 'b> {
     App::new("Garage Microcontroller")
-        .version("v0.1.0")
+        .version("v0.1.1")
         .author("Adam Bezecny")
         .about("Raspberry Pi Software for controlling garage door via MQTT and GPIO")
         .arg(

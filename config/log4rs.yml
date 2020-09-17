@@ -1,0 +1,25 @@
+# Scan this file for changes every 120 seconds
+refresh_rate: 120 seconds
+
+appenders:
+  stdout_appender:
+    kind: console
+      #encoder:
+      # see https://docs.rs/log4rs/0.13.0/log4rs/encode/pattern/index.html
+      # see https://docs.rs/chrono/0.3.1/chrono/format/strftime/index.html
+    # pattern: "{d(%Y-%m-%d %H:%M:%S.%sss)} {l} {t} - {m}{n}"
+
+  file_appender:
+    kind: file
+    path: "log/garage-controller.log"
+
+# Set the default logging level to "debug" and attach the "stdout_appender" appender to the root
+root:
+  level: debug
+  appenders:
+    - stdout_appender
+
+# this will enable trace for garage_controller module only, i.e. main file!
+loggers:
+  garage_controller:
+    level: trace
