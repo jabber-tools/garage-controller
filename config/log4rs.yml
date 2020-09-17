@@ -13,6 +13,30 @@ appenders:
     kind: file
     path: "log/garage-controller.log"
 
+  rolling_file_appender:
+    kind: rolling_file
+    path: "log/garage-controller.log"
+    # Specifies if the appender should append to or truncate the log file if it
+    # already exists. Defaults to `true`.
+    append: true
+    # The policy which handles rotation of the log file. Required.
+    policy:
+      # Identifies which policy is to be used. If no kind is specified, it will
+      # default to "compound".
+      kind: compound
+
+      # The remainder of the configuration is passed along to the policy's
+      # deserializer, and will vary based on the kind of policy.
+      trigger:
+        kind: size
+        limit: 10 kb
+
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 5
+        pattern: "log/garage-controller.{}.log"
+
 # Set the default logging level to "debug" and attach the "stdout_appender" appender to the root
 root:
   level: debug
